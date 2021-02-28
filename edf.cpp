@@ -60,8 +60,6 @@ struct process{
 
         void miss(int t)
         {
-            
-    
             this->missed_deadline ++;
 
             this->waiting_time -= t-curr_start-(p_time-cpu_execution);
@@ -104,14 +102,34 @@ int find_idx(vector <process> p,int id)
 int main()
 {
     int n,p_id,ti,p,k;
-    cin >> n;
+    ifstream infile("inp-params.txt");
+    ofstream log_file("EDF-Log.txt"),stat_file("EDF-Stats.txt");
+    if (!infile.is_open())
+    {
+        cout << "Input file not found\n";
+        exit(1);
+    }
+    if (!log_file.is_open() || !stat_file.is_open())
+    {
+        cout << "Unable to generate output file\n";
+        exit(1);
+    }
 
+    infile >> n;
     vector <process> processes;
-    
     for (int i = 0; i < n; i++)
     {
-        cin >> p_id >> ti >> p >> k ;
+        infile >> p_id >> ti >> p >> k ;
         processes.push_back(*(new process(p_id,ti,p,k))) ;
+    }
+    for (int i = 0; i < n; i++)
+    {
+        infile >> p_id >> ti >> p >> k ;
+        log_file << "Process P" << processes[i].process_id 
+                <<": processing time=" << processes[i].p_time 
+                << "; deadline:"<< processes[i].curr_deadline
+                <<"; period:"<< processes[i].period
+                <<" joined the system at time "<<processes[i].curr_start<<"\n";
     }
     sort(processes.begin(),processes.end(),compare);
     //...........................................................................
@@ -119,11 +137,6 @@ int main()
         c_id=-1,l_id=-1,
         k_flag,
         was_running=1;
-
-    // for (int i = 0; i < n; i++)
-    // {
-    //     cout<<processes[i].process_id<<"...\n";
-    // }
     
     for(int t=0;true;t++)
     {
@@ -131,16 +144,13 @@ int main()
         c_id =get_min_process_start_time(processes,t);
         p_idx = find_idx (processes,c_id);
         last_idx = find_idx (processes,l_id);
-        
-
-        // cout << "$$$$" <<p_idx<<"*********"<<last_idx<<"\n";
 
         if(p_idx != -1)
         {
             if(!was_running)
-                cout << "CPU Idle till :"<<t<<"\n";
+                log_file << "CPU Idle till :"<<t<<"\n";
             if(last_idx == -1 || !was_running)
-                cout <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
+                log_file <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
             else
             {
                 if(p_idx != last_idx)
@@ -148,14 +158,14 @@ int main()
                     if(processes[last_idx].cpu_execution == processes[last_idx].p_time )
                     {
                         if(processes[p_idx].cpu_execution == processes[p_idx].p_time)
-                            cout <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
+                            log_file <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
                         else
-                            cout <<"Process P"<< processes[p_idx].process_id <<" resumes execution at time " <<t<< "\n";
+                            log_file <<"Process P"<< processes[p_idx].process_id <<" resumes execution at time " <<t<< "\n";
                     }
                     else
                     {
-                        cout <<"Process P"<< processes[last_idx].process_id <<" preempted by Process P" <<processes[p_idx].process_id <<" at time " <<t<< ". Remainig processing time:"<<processes[last_idx].cpu_execution<<"\n";
-                        cout <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
+                        log_file <<"Process P"<< processes[last_idx].process_id <<" preempted by Process P" <<processes[p_idx].process_id <<" at time " <<t<< ". Remainig processing time:"<<processes[last_idx].cpu_execution<<"\n";
+                        log_file <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
                     }
                 }
             }
@@ -164,7 +174,7 @@ int main()
             if(processes[p_idx].cpu_execution==0)
             {   
                 processes[p_idx].complete_iteration();
-                cout <<"Process P"<< processes[p_idx].process_id  <<" finishes execution at time " <<t+1 << "\n";
+                log_file <<"Process P"<< processes[p_idx].process_id  <<" finishes execution at time " <<t+1 << "\n";
             }
             l_id = c_id;
 
@@ -182,9 +192,7 @@ int main()
             if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution > processes[i].curr_deadline)
             {
                 processes[i].miss(t);
-                // p_idx = find_idx (processes,c_id);
-                // sort(processes.begin(),processes.end(),compare);
-                cout <<"Process P"<< processes[i].process_id  <<" missed deadline at time " <<t << "\n";
+                log_file <<"Process P"<< processes[i].process_id  <<" missed deadline at time " <<t << "\n";
             }
             if(processes[i].iteration_left>0)
                 k_flag=1;
@@ -199,28 +207,28 @@ int main()
                 && processes[i].curr_start < t+1
                 && processes[i].iteration_left >0
             )
-            {
-            //     if(processes[i].process_id == 1)
-            //     {
-            //         cout <<i<<p_idx<<"..........."<< processes[i].curr_start << "......" << processes[i].curr_deadline << ".........." << t << "......" << processes[i].cpu_execution <<"\n"  ;
-            // }
             processes[i].waiting_time ++;
-        }
         }
            
     }
 
     double avg = 0.0;
-
+    int completed=0,missed=0,total=0;
     for(int i=0;i<n;i++)
     {
-        cout << "Process P"<<processes[i].process_id <<" Waiting time: "<<processes[i].waiting_time << " Missed Deadlines: " <<processes[i].missed_deadline<< " Completed Deadlines: "<< processes[i].completed_deadline;
-        cout << " Avg Waiting Time: "<<processes[i].waiting_time/(double)processes[i].repetition <<" \n";
-
+        // cout << "Process P"<<processes[i].process_id <<" Waiting time: "<<processes[i].waiting_time
+        //  << " Missed Deadlines: " <<processes[i].missed_deadline<< " Completed Deadlines: "<< processes[i].completed_deadline;
+        // cout << " Avg Waiting Time: "<<processes[i].waiting_time/(double)processes[i].repetition <<" \n";
         avg += processes[i].waiting_time/(double)processes[i].repetition;
+        total += processes[i].repetition;
+        completed += processes[i].completed_deadline;
+        missed += processes[i].missed_deadline;
     }
 
-    cout << "Avg_waiting_time: " << avg/n <<"\n";
-    return 0;
+    stat_file   << "Number of processes that came in the system: " << total <<"\n"
+                << "Number of processes that successfully completed: " << completed <<"\n"
+                << "Number of processes that missed their deadlines: " << missed << "\n"
+                << "Average waiting time for each process: " <<avg/n <<"\n" ;
 
+    return 0;
 }
