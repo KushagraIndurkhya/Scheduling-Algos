@@ -78,20 +78,28 @@ struct process{
 
 bool compare(process a, process b)
 {
-    if(a.priority != b.priority)
-        return a.priority > b.priority;
+    if(a.curr_deadline != b.curr_deadline)
+        return a.curr_deadline < b.curr_deadline;
     else
         return a.process_id < b.process_id;
 }
 
 int get_min_process_start_time(vector <process> p,int t)
 {
+    
     for(int i=0;i<p.size();i++)
             if(p[i].curr_start <=t && p[i].iteration_left > 0 )
-                return i;
+                return p[i].process_id;
     return -1;
 }
 
+int find_idx(vector <process> p,int id)
+{
+    for(int i=0;i<p.size();i++)
+            if(p[i].process_id == id)
+                return i;
+    return -1;
+}
 
 int main()
 {
@@ -108,13 +116,24 @@ int main()
     sort(processes.begin(),processes.end(),compare);
     //...........................................................................
     int last_idx= -1,p_idx,
+        c_id=-1,l_id=-1,
         k_flag,
         was_running=1;
+
+    // for (int i = 0; i < n; i++)
+    // {
+    //     cout<<processes[i].process_id<<"...\n";
+    // }
     
     for(int t=0;true;t++)
     {
+        sort(processes.begin(),processes.end(),compare);
+        c_id =get_min_process_start_time(processes,t);
+        p_idx = find_idx (processes,c_id);
+        last_idx = find_idx (processes,l_id);
         
-        p_idx = get_min_process_start_time(processes,t);
+
+        // cout << "$$$$" <<p_idx<<"*********"<<last_idx<<"\n";
 
         if(p_idx != -1)
         {
@@ -124,7 +143,7 @@ int main()
                 cout <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
             else
             {
-                if(last_idx != p_idx)
+                if(p_idx != last_idx)
                 {
                     if(processes[last_idx].cpu_execution == processes[last_idx].p_time )
                     {
@@ -147,7 +166,8 @@ int main()
                 processes[p_idx].complete_iteration();
                 cout <<"Process P"<< processes[p_idx].process_id  <<" finishes execution at time " <<t+1 << "\n";
             }
-            last_idx = p_idx;
+            l_id = c_id;
+
             was_running=1;
         }
         else
@@ -162,6 +182,8 @@ int main()
             if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution > processes[i].curr_deadline)
             {
                 processes[i].miss(t);
+                // p_idx = find_idx (processes,c_id);
+                // sort(processes.begin(),processes.end(),compare);
                 cout <<"Process P"<< processes[i].process_id  <<" missed deadline at time " <<t << "\n";
             }
             if(processes[i].iteration_left>0)
@@ -169,6 +191,7 @@ int main()
         }
         if(!k_flag)
             break; 
+        p_idx = find_idx (processes,c_id);
         for(int i=0;i<n;i++)
         {
             if(
