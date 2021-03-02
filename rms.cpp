@@ -2,35 +2,37 @@
 RMS-Scheduling
 Author: Kushagra Indurkhya
 */
-
 #include <iostream>
 #include <fstream>
-#include <bits/stdc++.h> 
+#include <bits/stdc++.h>
 
 using namespace std;
+//***************************
+// #define CONTEXT_SWITCH 0.010
+//***************************
 
 struct process
 {
     public:
-        //meta
-        int process_id;
-        int p_time;
-        int period;
-        int repetition;
+        //meta -provided in input
+        int process_id; //id of the process
+        int p_time;//cpu execution 
+        int period;//period of the process
+        int repetition;//number of time the process repeats
         
 
         double priority;
 
         //helper
         int iteration_left; //no of iterations left
-        int curr_start;     //start time of current process
-        int curr_deadline;  //current deadline of current process
+        double curr_start;     //start time of current process
+        double curr_deadline;  //current deadline of current process
         int cpu_execution;  //cpu_execution left in current process
 
         //stats
         int missed_deadline;    //no of deadlines missed
         int completed_deadline; //no of deadlines completed
-        int waiting_time;       //time waited
+        double waiting_time;       //time waited
 
         //Constructor
         process(int p_id,int t,int p,int k)
@@ -78,7 +80,7 @@ struct process
         -resets cpu_execution
         -decrements number of processes left
         */
-        void miss(int t)
+        void miss(double t)
         {
             this->missed_deadline ++;
             
@@ -176,8 +178,20 @@ int main()
         was_running=1;
     
     //infinite  for loop
-    for(int t=0;true;t++)
+
+
+    //***************************
+    // clock_t start_time,end_time;
+    //****************************
+
+
+    for(double t=0;true;t++)
     {
+        //***************************
+            // start_time=clock();
+        //****************************
+
+
         //retrieving the id of process with highest priority
         p_idx = get_min_process_start_time(processes,t);
 
@@ -205,15 +219,25 @@ int main()
                     }
                     else // this process is preempting the last process
                     { 
+                         
+                        
                         log_file <<"Process P"<< processes[last_idx].process_id 
                         <<" preempted by Process P" <<processes[p_idx].process_id 
                         <<" at time " <<t
                         << ". Remainig processing time:"<<processes[last_idx].cpu_execution<<"\n";
 
+                        //***************************
+                            // t+= CONTEXT_SWITCH;
+                        //****************************
+
                         log_file <<"Process P"<< processes[p_idx].process_id <<" starts execution at time " <<t<< "\n";
                     }
                 }
             }
+            //***************************
+            // end_time = clock();
+            // t+= (end_time-start_time)*.001;
+            //***************************
 
             processes[p_idx].cpu_execution--; //Executing the process
             if(processes[p_idx].cpu_execution==0) //process finished
@@ -275,7 +299,7 @@ int main()
     stat_file   << "Number of processes that came in the system: " << total <<"\n"
                 << "Number of processes that successfully completed: " << completed <<"\n"
                 << "Number of processes that missed their deadlines: " << missed << "\n"
-                << "Average waiting time for each process: " <<avg/n <<"\n" ;
+                << "Average waiting time for each process: " <<avg/n <<" Milliseconds \n" ;
 
     return 0;
 }

@@ -3,7 +3,7 @@ compile:
 		${CC} rms.cpp -o rms.o;
 		${CC} edf.cpp -o edf.o;
 		./rms.o;
-		./edf.o;
+		./edf.o
 
 clean:
-		rm *.o;
+		rm *.o EDF-Log.txt EDF-Stats.txt RM-Log.txt RM-Stats.txt;
