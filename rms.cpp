@@ -115,6 +115,8 @@ get_min_process_start_time(vector <process> p,int t)
 takes a vector p of processes and time t
 returns the idx of the process having the most priority and 
 can be executed (ie start_time <= t and has processes left)
+
+returns -1 if no process can be executed
 */
 int get_min_process_start_time(vector <process> p,int t)
 {
@@ -127,7 +129,6 @@ int get_min_process_start_time(vector <process> p,int t)
 
 int main()
 {
-    
     int n,p_id,ti,p,k;
 
     //opening input and output files
@@ -234,7 +235,7 @@ int main()
         for(int i=0;i<n;i++)
         {
             //process will miss the deadline
-            if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution > processes[i].curr_deadline)
+            if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution >= processes[i].curr_deadline)
             {
                 processes[i].miss(t);
                 log_file <<"Process P"<< processes[i].process_id  <<" missed deadline at time " <<t << "\n";

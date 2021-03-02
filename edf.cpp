@@ -244,7 +244,7 @@ int main()
         for(int i=0;i<n;i++)
         {
             //process will miss the deadline
-            if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution > processes[i].curr_deadline)
+            if(processes[i].iteration_left > 0 && t+processes[i].cpu_execution >= processes[i].curr_deadline)
             {
                 processes[i].miss(t);
                 log_file <<"Process P"<< processes[i].process_id  <<" missed deadline at time " <<t << "\n";
